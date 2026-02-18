@@ -1,0 +1,10 @@
+{
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.currentSetup": "/var/home/kestrel/.espressif/v5.5.2/esp-idf",
+  "idf.openOcdConfigs": [
+    "board/esp32p4-ftdi.cfg"
+  ],
+  "idf.flashType": "UART",
+  "idf.port": "/dev/ttyACM0"
+}
