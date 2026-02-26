@@ -140,20 +140,9 @@ dependencies:
     source:
       type: idf
     version: 5.5.2
-  jimmyw/esp_logger:
-    component_hash: e7edb96ead146f1d428992cc6003da78b5727bf46b91240be87d1590c5e0da11
-    dependencies:
-    - name: idf
-      require: private
-      version: '>=4.4.0'
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 0.0.1
 direct_dependencies:
 - espressif/esp_video
 - idf
-- jimmyw/esp_logger
-manifest_hash: 3b7d12fa162071269ea9b9a7cf96979ed110be506babee6b2488b61adb1d89ba
+manifest_hash: 14763ca32791c998377d799c20b329f23ae191298b05df5138a6a75acb3eae28
 target: esp32p4
 version: 2.0.0

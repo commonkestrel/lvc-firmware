@@ -15,4 +15,3 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   espressif/esp_video: =2.0.0
-  jimmyw/esp_logger: ^0.0.1

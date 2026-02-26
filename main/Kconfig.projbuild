@@ -1,0 +1,74 @@
+menu "LVC Configuration"
+    menu "Video Configuration"
+        config CAMERA_HEIGHT
+            int "Camera Height (px)"
+            default 1080
+
+        config CAMERA_WIDTH
+            int "Camera Width (px)"
+            default 1920
+
+        config H264_MIN_QP
+            int "H264 Minimum QP"
+            default 1
+            help
+                The minimum quantization parameter for the h264 encoder.
+
+        config H264_MAX_QP
+            int "H264 Maximum QP"
+            default 35
+            help
+                The maximum quantization parameter for the h264 encoder.
+
+        config H264_BITRATE
+            int "H264 Bitrate"
+            default 30000
+    endmenu
+
+    menu "Network Configuration"
+        config MULTICAST_IPV4_ADDR
+            string "Multicast IPV4 Address (tx)"
+            default "232.10.11.12"
+            help
+                IPv4 multicast address. The LVC will send H264 packets to this address.
+        
+        config MULTICAST_PORT
+            int "Multicast Port (tx)"
+            default 3333
+            help
+                Multicast port. The LVC will send H264 packets on this port.
+
+        config MULTICAST_TTL
+            int "Multicast TTL"
+            default 1
+            help
+                Multicast Time-to-Live. The number of hops between routers a multicast packet can take.
+
+        config STATIC_IP
+            bool "Static IP"
+            default y
+            help
+                Disables DHCP and assigns the ESP32 a static IP on ethernet initialization,
+                rather than waiting for an IP.
+            config DEVICE_IPV4_ADDR
+                depends on STATIC_IP
+                string "Device IP Address (IPv4)"
+                default "169.254.41.20"
+                help
+                    IPv4 device address. The ESP32 will initialize ethernet with this as a static IP.
+
+            config DEVICE_IPV4_NETMASK
+                depends on STATIC_IP
+                string "Device Netmask (IPv4)"
+                default "255.255.255.0"
+                help
+                    IPv4 device netmask. This is part of the static IP configuration.  
+
+            config DEVICE_IPV4_GATEWAY
+                depends on STATIC_IP
+                string "Device Gateway Address (IPv4)"
+                default "169.254.41.1"
+                help
+                    IPv4 device gateway address. This is part of the static IP configuration.   
+    endmenu 
+endmenu
