@@ -6,6 +6,7 @@
 #include "esp_flash.h"
 #include "stream.h"
 #include "multicast.h"
+#include "chunks.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include <sys/param.h>
@@ -13,7 +14,7 @@
 static const char *TAG = "lvc::main.c";
 
 static esp_netif_t *netif;
-static TaskHandle_t multicast_task_handle;
+static SemaphoreHandle_t frame_lock;
 static uint8_t *frame_buffer;
 static uint32_t frame_length;
 static int stream_fd;
@@ -22,36 +23,35 @@ static void multicast_task(void *pvParameter) {
     while (1) {
         int err = 0;
         int sock = create_multicast_socket(netif);
-        if (sock < 0) {
+        while (sock < 0) {
             ESP_LOGE(TAG, "Failed to create IPv4 multicast socket");
             vTaskDelay(5 / portTICK_PERIOD_MS);
-            continue;
+            sock = create_multicast_socket(netif);
         }
 
         while (err >= 0) {
-            ESP_LOGI(TAG, "Multicast waiting for semaphore");
-            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-            ESP_LOGI(TAG, "Sending packet!");
-            err = send_multicast_packet(sock, frame_buffer, frame_length);
+            xSemaphoreTake(frame_lock, portMAX_DELAY);
+            ESP_LOGI(TAG, "Sending packet of %d bytes", frame_length);
+            send_multicast_packet(sock, frame_buffer, frame_length);
+            xSemaphoreGive(frame_lock);
         }
         
         ESP_LOGE(TAG, "Error sending multicast packet");
-        ESP_LOGE(TAG, "Shutting down socket and restarting...");
         close_socket(sock);
     }
 }
 
 void send_frame(uint8_t *buffer, uint32_t length) {
-    ESP_LOGI(TAG, "Sent frame");
-    frame_buffer = buffer;
+    free(frame_buffer);
+    frame_buffer = malloc(frame_length);
     frame_length = length;
-    xTaskNotifyGive(multicast_task_handle);
+    xSemaphoreGive(frame_lock);
 }
 
 void encode_task(void *pvParameter) {
     esp_h264_enc_cfg_hw_t cfg = {0};
     cfg.gop = 30;
-    cfg.fps = 10;
+    cfg.fps = 50;
     cfg.res.width = WIDTH;
     cfg.res.height = HEIGHT;
 
@@ -73,7 +73,6 @@ void encode_task(void *pvParameter) {
     int width = ((cfg.res.width +15) >> 4 << 4);
     int height = ((cfg.res.height+15) >> 4 << 4);
 
-
     esp_h264_enc_in_frame_t in_frame = {.raw_data.len = width * height + (width * height >> 1)};
     in_frame.raw_data.buffer = esp_h264_aligned_calloc(16, 1, in_frame.raw_data.len, &in_frame.raw_data.len, MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
                                                 
@@ -87,6 +86,7 @@ void encode_task(void *pvParameter) {
     uint8_t *video_buffer;
     // Encoding loop
     while (1) {
+        xSemaphoreTake(frame_lock, portMAX_DELAY);
         int err = stream_capture_frame(stream_fd, in_frame.raw_data.buffer, &in_frame.raw_data.len);
         if (err == ESP_ERR_TIMEOUT) {
             vTaskDelay(5 / portTICK_PERIOD_MS);
@@ -95,13 +95,10 @@ void encode_task(void *pvParameter) {
             break;
         }
         esp_h264_enc_process(enc, &in_frame, &out_frame);
-        ESP_LOGI(TAG, "Sending frame");
+        ESP_LOGI(TAG, "encoded, sending frame");
         send_frame(out_frame.raw_data.buffer, out_frame.length);
         // stream_release_frame(stream_fd, &video_buffer)
-        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-
-    ESP_LOGI(TAG, "aaaand it's over");
 
     // Resource release
     esp_h264_enc_close(enc);
@@ -126,12 +123,13 @@ void app_main(void) {
         return;
     }
 
-    xTaskCreate(&encode_task, "encode_task", 4096, NULL, 5, NULL);
-
-
     if (eth_connect(&netif) != ESP_OK) {
         ESP_LOGE(TAG, "failed to initialize ethernet handle");
     }
 
-    xTaskCreate(&multicast_task, "multicast_task", 4096, NULL, 5, &multicast_task_handle);
+    frame_lock = xSemaphoreCreateBinary();
+    xSemaphoreGive(frame_lock);
+    
+    xTaskCreate(&encode_task, "encode_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&multicast_task, "multicast_task", 4096, NULL, 5, NULL);
 }

@@ -13,8 +13,7 @@
 #include "stream.h"
 
 static bool is_init = false;
-static uint8_t *frame_buffer;
-static uint32_t frame_length;
+static uint8_t *buffers[2];
 
 static const char *TAG = "lvc::stream.c";
 
@@ -116,8 +115,6 @@ esp_err_t stream_log_capability(int fd, struct v4l2_capability *capability) {
 
 int stream_open(void) {
     struct v4l2_capability capability;
-
-    const int fmt = V4L2_PIX_FMT_YUV420;
     const int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
     int fd = open(DEVICE_NAME, O_RDONLY);
@@ -132,10 +129,11 @@ int stream_open(void) {
         return -1;
     }
 
-        struct v4l2_format format = {
-        .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+    struct v4l2_format format = {
+        .type = type,
         .fmt.pix.width = WIDTH,
         .fmt.pix.height = HEIGHT,
+        
         .fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420,
     };
 
@@ -146,33 +144,36 @@ int stream_open(void) {
 
     struct v4l2_requestbuffers req;
     memset(&req, 0, sizeof(req));
-    req.count = 1;
-    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.count = 2;
+    req.type = type;
     req.memory = V4L2_MEMORY_MMAP;
     if (ioctl(fd, VIDIOC_REQBUFS, &req) != 0) {
         ESP_LOGE(TAG, "failed to require buffer");
         return ESP_FAIL;
     }
 
-    struct v4l2_buffer buf;
-    memset(&buf, 0, sizeof(buf));
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
-    if (ioctl(fd, VIDIOC_QUERYBUF, &buf) != 0) {
-        ESP_LOGE(TAG, "failed to query buffer");
-        return ESP_FAIL;
-    }
+    for (int i = 0; i < 2; i++) {
+        struct v4l2_buffer buf;
+        memset(&buf, 0, sizeof(buf));
+        buf.type = type;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = i;
+        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) != 0) {
+            ESP_LOGE(TAG, "failed to query buffer");
+            return -1;
+        }
 
-    frame_buffer = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-    if (!frame_buffer) {
-        ESP_LOGE(TAG, "failed to map buffer");
-        return ESP_FAIL;
-    }
+        buffers[i] = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+        if (!buffers[i]) {
+            ESP_LOGE(TAG, "failed to map buffer");
+            return -1;
+        }
 
-    if (ioctl(fd, VIDIOC_QBUF, &buf) != 0) {
-        ESP_LOGE(TAG, "failed to queue video frame");
-        return ESP_FAIL;
-    }
+        if (ioctl(fd, VIDIOC_QBUF, &buf) != 0) {
+            ESP_LOGE(TAG, "failed to queue video frame");
+            return ESP_FAIL;
+        }
+    }    
 
     if (ioctl(fd, VIDIOC_STREAMON, &type) != 0) {
         ESP_LOGE(TAG, "failed to start stream");
@@ -199,19 +200,15 @@ esp_err_t stream_capture_frame(int fd, uint8_t *buffer, uint32_t *length) {
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
 
-    ESP_LOGI(TAG, "i am getting called i swear");
-
     if (ioctl(fd, VIDIOC_DQBUF, &buf) != 0) {
         ESP_LOGE(TAG, "failed to receive video frame");
         return ESP_ERR_TIMEOUT;
     }
 
-    ESP_LOGI(TAG, "am i though?");
-
     esp_err_t ret;
     if (buf.flags & V4L2_BUF_FLAG_DONE) {
         *length = buf.bytesused;
-        memcpy(frame_buffer, buffer, *length);
+        memcpy(buffer, buffers[buf.index], *length);
         ret = ESP_OK;
     } else {
         // Let the calling function know that a frame isn't ready yet

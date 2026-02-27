@@ -89,6 +89,7 @@ esp_err_t eth_connect(esp_netif_t **netif_out) {
 
     ESP_LOGI(TAG, "Waiting for IP.");
 
+    // Initialize a static IP if one is provided
     #ifdef CONFIG_STATIC_IP
         esp_netif_ip_info_t ip;
         memset(&ip, 0, sizeof(esp_netif_ip_info_t));
@@ -209,15 +210,15 @@ esp_err_t send_multicast_packet(int sock, const void *dataptr, size_t len) {
 
     ((struct sockaddr_in *)res->ai_addr)->sin_port = htons(CONFIG_MULTICAST_PORT);
     inet_ntoa_r(((struct sockaddr_in *)res->ai_addr)->sin_addr, addrbuf, sizeof(addrbuf)-1);
-    ESP_LOGI(TAG, "Sending to IPV4 multicast address %s:%d...", addrbuf, CONFIG_MULTICAST_PORT);
+    // ESP_LOGI(TAG, "Sending %d bytes to IPV4 multicast address %s:%d...", len, addrbuf, CONFIG_MULTICAST_PORT);
 
     err = sendto(sock, dataptr, len, 0, res->ai_addr, res->ai_addrlen);
-    ESP_LOGI(TAG, "Send UDP packet to %s", CONFIG_MULTICAST_IPV4_ADDR);
     freeaddrinfo(res);
     if(err < 0) {
         ESP_LOGE(TAG, "IPV4 sendto failed. errno: %d", errno);
         return ESP_FAIL;
     }
+    // ESP_LOGI(TAG, "Sent UDP packet to %s", CONFIG_MULTICAST_IPV4_ADDR);
 
     return ESP_OK;
 }
