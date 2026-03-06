@@ -10,6 +10,7 @@
 
 #define HEIGHT CONFIG_CAMERA_HEIGHT
 #define WIDTH CONFIG_CAMERA_WIDTH
+#define BUFFER_LEN (((WIDTH +15) >> 4 << 4) * ((HEIGHT +15) >> 4 << 4) + (((WIDTH +15) >> 4 << 4) * ((HEIGHT +15) >> 4 << 4) >> 1))
 
 esp_err_t stream_init(void);
 esp_err_t stream_open(void);
