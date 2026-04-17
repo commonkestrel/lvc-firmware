@@ -18,8 +18,8 @@ static int stream_fd;
 
 void encode_task(void *pvParameter) {
     esp_h264_enc_cfg_hw_t cfg = {0};
-    cfg.gop = 30;
-    cfg.fps = 50;
+    cfg.gop = 15;
+    cfg.fps = 15;
     cfg.res.width = WIDTH;
     cfg.res.height = HEIGHT;
 
@@ -61,31 +61,52 @@ void encode_task(void *pvParameter) {
             vTaskDelay(5 / portTICK_PERIOD_MS);
             sock = create_multicast_socket(netif);
         }
-
+        
         while (err >= 0) {
-            err = stream_capture_frame(stream_fd, in_frame.raw_data.buffer, &in_frame.raw_data.len);
-            if (err == ESP_ERR_TIMEOUT) {
-                vTaskDelay(5 / portTICK_PERIOD_MS);
-                err = ESP_OK;
-                continue;
-            } else if (err != ESP_OK) {
-                break;
+            int frame_count = 0;
+
+            while (err >= 0) {
+                //if (esp_timer_get_time() - start_time_us < 66667) {
+                //    continue;
+                //}
+
+                //start_time_us = esp_timer_get_time();
+
+                err = stream_capture_frame(stream_fd, in_frame.raw_data.buffer, &in_frame.raw_data.len);
+                if (err == ESP_ERR_TIMEOUT) {
+                    vTaskDelay(5 / portTICK_PERIOD_MS);
+                    err = ESP_OK;
+                    continue;
+                } else if (err != ESP_OK) {
+                    break;
+                }
+
+                frame_count++;
+
+                // if (!set_frame_rate && esp_timer_get_time() - start_time_us >= (4 * 1000 * 1000)) {
+                //     esp_h264_enc_param_hw_handle_t fps_hd;
+                //     esp_h264_enc_hw_get_param_hd(enc, &fps_hd);
+                //     esp_h264_enc_set_fps(&fps_hd->base, frame_count / 4);
+                // }
+
+                if (esp_h264_enc_process(enc, &in_frame, &out_frame) != ESP_H264_ERR_OK) {
+                    ESP_LOGE(TAG, "error while encoding frame");
+                    continue;
+                }
+
+                ESP_LOGI(TAG, "Sending packet of %d bytes", out_frame.length);
+                send_multicast_packet(sock, out_frame.raw_data.buffer, out_frame.length);
+
+                //if (frame_count > 30) {
+                //    break;
+               // }
             }
 
-            // frame_count++;
-            // if (!set_frame_rate && esp_timer_get_time() - start_time_us >= (4 * 1000 * 1000)) {
-            //     esp_h264_enc_param_hw_handle_t fps_hd;
-            //     esp_h264_enc_hw_get_param_hd(enc, &fps_hd);
-            //     esp_h264_enc_set_fps(&fps_hd->base, frame_count / 4);
-            // }
-
-            if (esp_h264_enc_process(enc, &in_frame, &out_frame) != ESP_H264_ERR_OK) {
-                ESP_LOGE(TAG, "error while encoding frame");
-                continue;
-            }
-
-            // ESP_LOGI(TAG, "Sending packet of %d bytes", out_frame.length);
-            send_multicast_packet(sock, out_frame.raw_data.buffer, out_frame.length);
+            //ESP_LOGI(TAG, "Reloading encoder!");
+            //esp_h264_enc_close(enc);
+            //esp_h264_enc_del(enc);
+            //int err = esp_h264_enc_hw_new(&cfg, &enc);
+            //esp_h264_enc_open(enc);
         }
         
         ESP_LOGE(TAG, "Error sending multicast packet, closing socket and restarting");
