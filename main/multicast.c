@@ -31,7 +31,7 @@ esp_err_t eth_init(esp_eth_handle_t *eth_handle_out) {
     eth_esp32_emac_config_t esp32_emac_config = ETH_ESP32_EMAC_DEFAULT_CONFIG();
 
     esp32_emac_config.smi_gpio.mdc_num = 31; // ESP32p4's pin
-    esp32_emac_config.smi_mdio_gpio_num = 52; //ESP32p4's number
+    esp32_emac_config.smi_gpio.mdio_num = 52; //ESP32p4's number
 
     esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&esp32_emac_config, &mac_config);
     if (mac == NULL) {
