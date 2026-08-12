@@ -1,6 +1,13 @@
 {
   "terminal.integrated.defaultProfile.linux": "bash",
-  "idf.currentSetup": "/var/home/kestrel/.espressif/v5.5.2/esp-idf",
+  "idf.currentSetup": "/home/kestrel/.espressif/v6.0.1/esp-idf",
   "idf.flashType": "UART",
-  "idf.port": "/dev/ttyACM0"
+  "idf.port": "/dev/ttyACM0",
+  "idf.customExtraVars": {},
+  "clangd.path": "/home/kestrel/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/kestrel/Documents/scripts/lvc-firmware/build"
+  ]
 }

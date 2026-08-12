@@ -1,6 +1,7 @@
 #include "multicast.h"
 #include "esp_log.h"
 #include "esp_event.h"
+#include "esp_eth.h"
 #include <netdb.h>
 
 static const char *TAG = "lvc::multicast.c";

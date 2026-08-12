@@ -1,12 +1,10 @@
-#include <stdio.h>
-#include "esp_flash.h"
 #include "esp_log.h"
 #include "esp_h264_enc_single_hw.h"
 #include "esp_h264_alloc.h"
-#include "esp_flash.h"
 #include "esp_timer.h"
-#include "stream.h"
 #include "multicast.h"
+#include "stream.h"
+#include "mpeg_ts.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include <sys/param.h>
@@ -55,22 +53,18 @@ void encode_task(void *pvParameter) {
     // Encoding loop
     while (1) {
         int err = 0;
-        int sock = create_multicast_socket(netif);
-        while (sock < 0) {
+
+        transport_stream_t ts;
+        err = create_ts(&ts, netif);
+
+        while (err < ESP_OK) {
             ESP_LOGE(TAG, "Failed to create IPv4 multicast socket");
             vTaskDelay(5 / portTICK_PERIOD_MS);
-            sock = create_multicast_socket(netif);
+            err = create_ts(&ts, netif);
         }
         
         while (err >= 0) {
-            int frame_count = 0;
-
             while (err >= 0) {
-                //if (esp_timer_get_time() - start_time_us < 66667) {
-                //    continue;
-                //}
-
-                //start_time_us = esp_timer_get_time();
 
                 err = stream_capture_frame(stream_fd, in_frame.raw_data.buffer, &in_frame.raw_data.len);
                 if (err == ESP_ERR_TIMEOUT) {
@@ -95,11 +89,13 @@ void encode_task(void *pvParameter) {
                 }
 
                 ESP_LOGI(TAG, "Sending packet of %d bytes", out_frame.length);
-                send_multicast_packet(sock, out_frame.raw_data.buffer, out_frame.length);
 
-                //if (frame_count > 30) {
-                //    break;
-               // }
+                if (frame_count % 3 == 0) {
+                    send_pat(&ts);
+                    send_pmt(&ts);
+                }
+
+                send_pes_packets(&ts, out_frame.raw_data.buffer, out_frame.length);
             }
 
             //ESP_LOGI(TAG, "Reloading encoder!");
@@ -110,7 +106,7 @@ void encode_task(void *pvParameter) {
         }
         
         ESP_LOGE(TAG, "Error sending multicast packet, closing socket and restarting");
-        close_socket(sock);
+        close_ts(ts);
         // stream_release_frame(stream_fd, &video_buffer)
     }
 
