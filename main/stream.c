@@ -200,8 +200,9 @@ esp_err_t stream_capture_frame(int fd, uint8_t *buffer, uint32_t *length) {
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
 
-    if (ioctl(fd, VIDIOC_DQBUF, &buf) != 0) {
-        ESP_LOGE(TAG, "failed to receive video frame");
+    int err = ioctl(fd, VIDIOC_DQBUF, &buf);
+    if (err != 0) {
+        ESP_LOGE(TAG, "failed to receive video frame %d", err);
         return ESP_ERR_TIMEOUT;
     }
 

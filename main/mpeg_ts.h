@@ -11,8 +11,10 @@
 #define TS_CRC_LEN (4)
 #define TS_TABLE_HEADER_LEN (13)
 #define TS_TABLE_SECTION_LEN (TS_PACKET_LENGTH - TS_TABLE_HEADER_LEN - TS_CRC_LEN)
+#define TS_UDP_DATAGRAM (TS_PACKET_LENGTH * 7)
 
 #define TS_PMT_PID (0x1000)
+#define TS_VIDEO_PID (0x0100)
 
 struct transport_stream_obj {
     int multicast_socket;
@@ -20,6 +22,8 @@ struct transport_stream_obj {
     uint8_t pat_cc;
     uint8_t pmt_cc;
     async_crc_handle_t crc_hdl;
+    uint8_t *datagram;
+    uint16_t datagram_offset;
 };
 
 typedef struct transport_stream_obj transport_stream_t;

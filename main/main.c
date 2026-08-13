@@ -2,12 +2,15 @@
 #include "esp_h264_enc_single_hw.h"
 #include "esp_h264_alloc.h"
 #include "esp_timer.h"
+#include "freertos/idf_additions.h"
 #include "multicast.h"
 #include "stream.h"
 #include "mpeg_ts.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
+#include <sys/_timeval.h>
 #include <sys/param.h>
+#include <sys/time.h>
 
 static const char *TAG = "lvc::main.c";
 
@@ -50,6 +53,10 @@ void encode_task(void *pvParameter) {
     int64_t start_time_us = esp_timer_get_time();
 
     uint8_t *video_buffer;
+
+    // uint8_t *datagram[TS_UDP_DATAGRAM];
+    // size_t datagram_offset = 0;
+
     // Encoding loop
     while (1) {
         int err = 0;
@@ -65,7 +72,6 @@ void encode_task(void *pvParameter) {
         
         while (err >= 0) {
             while (err >= 0) {
-
                 err = stream_capture_frame(stream_fd, in_frame.raw_data.buffer, &in_frame.raw_data.len);
                 if (err == ESP_ERR_TIMEOUT) {
                     vTaskDelay(5 / portTICK_PERIOD_MS);
@@ -96,6 +102,7 @@ void encode_task(void *pvParameter) {
                 }
 
                 send_pes_packets(&ts, out_frame.raw_data.buffer, out_frame.length);
+                // send _multicast_packet(ts.multicast_socket, out_frame.raw_data.buffer, out_frame.length);
             }
 
             //ESP_LOGI(TAG, "Reloading encoder!");

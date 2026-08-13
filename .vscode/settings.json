@@ -1,6 +1,6 @@
 {
   "terminal.integrated.defaultProfile.linux": "bash",
-  "idf.currentSetup": "/home/kestrel/.espressif/v6.0.1/esp-idf",
+  "idf.currentSetup": "/home/kestrel/.espressif/master/esp-idf",
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyACM0",
   "idf.customExtraVars": {},

@@ -1,16 +1,16 @@
 menu "LVC Configuration"
     menu "Video Configuration"
-        config CAMERA_HEIGHT
-            int "Camera Height (px)"
-            default 1080
-
         config CAMERA_WIDTH
             int "Camera Width (px)"
-            default 1920
+            default 1280
+        
+        config CAMERA_HEIGHT
+            int "Camera Height (px)"
+            default 960
 
         config H264_MIN_QP
             int "H264 Minimum QP"
-            default 1
+            default 26
             help
                 The minimum quantization parameter for the h264 encoder.
 
@@ -22,7 +22,7 @@ menu "LVC Configuration"
 
         config H264_BITRATE
             int "H264 Bitrate"
-            default 30000
+            default 3000000
     endmenu
 
     menu "Network Configuration"
