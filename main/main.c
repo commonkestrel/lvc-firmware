@@ -19,8 +19,8 @@ static int stream_fd;
 
 void encode_task(void *pvParameter) {
     esp_h264_enc_cfg_hw_t cfg = {0};
-    cfg.gop = 15;
-    cfg.fps = 15;
+    cfg.gop = CONFIG_H264_GOP;
+    cfg.fps = CONFIG_H264_FPS;
     cfg.res.width = WIDTH;
     cfg.res.height = HEIGHT;
 
@@ -49,13 +49,6 @@ void encode_task(void *pvParameter) {
     esp_h264_enc_open(enc);
 
     int frame_count = 0;
-    bool set_frame_rate = false;
-    int64_t start_time_us = esp_timer_get_time();
-
-    uint8_t *video_buffer;
-
-    // uint8_t *datagram[TS_UDP_DATAGRAM];
-    // size_t datagram_offset = 0;
 
     // Encoding loop
     while (1) {

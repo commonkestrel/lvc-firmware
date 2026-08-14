@@ -8,6 +8,16 @@ menu "LVC Configuration"
             int "Camera Height (px)"
             default 960
 
+        config H264_FPS
+            int "Encoder FPS"
+            default 15
+
+        config H264_GOP
+            int "H264 GOP"
+            default 15
+            help
+                The number of frames in each group of pictures. Smaller numbers mean keyframes appear more often.
+
         config H264_MIN_QP
             int "H264 Minimum QP"
             default 26
@@ -27,7 +37,7 @@ menu "LVC Configuration"
 
     menu "Network Configuration"
         config MULTICAST_IPV4_ADDR
-            string "Multicast IPV4 Address (tx)"
+            string "Multicast IPv4 Address (tx)"
             default "232.10.11.12"
             help
                 IPv4 multicast address. The LVC will send H264 packets to this address.
