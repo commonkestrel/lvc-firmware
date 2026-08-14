@@ -9,7 +9,11 @@ down to the ground via MPEG-TS.
 In order to stream the video locally,
 run the following command:
 
-`ffplay "udp://@232.10.11.12:3333?localaddr=<LOCAL_ADDR>&pkt_size=188" -f mpegts -analyzeduration 500000`, where `<LOCAL_ADDR>` is the local address of the interface
+```bash
+ffplay "udp://@232.10.11.12:3333?localaddr=<LOCAL_ADDR>&pkt_size=188" -f mpegts -analyzeduration 500000
+```
+
+Where `<LOCAL_ADDR>` is the local address of the interface
 used to connect to LVC. 
 
 In order to save the video to a file,
@@ -44,7 +48,7 @@ Finally, there are a number of options that you may adjust to find the most opti
 | `H264 GOP` | The number of frames in each group of pictures. Smaller numbers mean keyframes appear more often | `15` |
 | `H264 Minimum QP` | The minimum quantization parameter for the encoder. Smaller numbers mean bigger intermediate packet sizes. | `26` |
 | `H264 Maximum QP` | The maximum quantization parameter for the encoder. Smaller numbers mean bigger keyframe sizes | `35` |
-| `H264 Bitrate` | The bitrate of the encoder. This does not account for the network or MPEG-TS overhead.
+| `H264 Bitrate` | The bitrate of the encoder. This does not account for the network or MPEG-TS overhead. | `3000000` |
 
 
 `LVC Configuration > Network Configuration`
@@ -53,7 +57,7 @@ Finally, there are a number of options that you may adjust to find the most opti
 | `Multicast IPv4 Address (tx)` | The multicast IPv4 address the packets are transmitted to | `232.10.11.12` |
 | `Multicast Port (tx)` | The multicast port the packets are transmitted to | `3333` |
 | `Multicast TTL` | The multicast time to live. Specifies the number of router hops the packets can take | `1` |
-| `Static IP` | Set if a static IP is required, such as on a local machine. Disable for P3 | [x] | 
+| `Static IP` | Set if a static IP is required, such as on a local machine. Disable for P3 | <ul><li>[x]</li></ul> | 
 | `Device IP Address (IPv4)` | The static IPv4 address assigned to LVC | `169.254.41.21` |
 | `Device Netmask (IPv4) | The netmask for the static IPv4 address | `255.255.255.0` |
 | `Device Gateway Address (IPv4) | The default gateway for the static IPv4 address | `169.254.41.1` |
