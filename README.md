@@ -57,7 +57,7 @@ Finally, there are a number of options that you may adjust to find the most opti
 | `Multicast IPv4 Address (tx)` | The multicast IPv4 address the packets are transmitted to | `232.10.11.12` |
 | `Multicast Port (tx)` | The multicast port the packets are transmitted to | `3333` |
 | `Multicast TTL` | The multicast time to live. Specifies the number of router hops the packets can take | `1` |
-| `Static IP` | Set if a static IP is required, such as on a local machine. Disable for P3 | <ul><li>[x]</li></ul> | 
+| `Static IP` | Set if a static IP is required, such as on a local machine. Disable for P3 | ☑️ | 
 | `Device IP Address (IPv4)` | The static IPv4 address assigned to LVC | `169.254.41.21` |
 | `Device Netmask (IPv4) | The netmask for the static IPv4 address | `255.255.255.0` |
 | `Device Gateway Address (IPv4) | The default gateway for the static IPv4 address | `169.254.41.1` |
